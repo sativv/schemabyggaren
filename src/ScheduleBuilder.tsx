@@ -298,7 +298,8 @@ export default function ScheduleBuilder(): React.JSX.Element {
     const action = pendingAction;
     setPendingAction(null);
     if (action === "close") {
-      if (appWindowRef.current) await appWindowRef.current.destroy();
+      markClean(); // dirtyRef.current = false so the handler lets the next close through
+      if (appWindowRef.current) await appWindowRef.current.close();
     } else if (action === "new") {
       doNew();
     } else if (action === "open") {
