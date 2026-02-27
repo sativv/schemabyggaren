@@ -221,10 +221,12 @@ export default function ScheduleBuilder(): React.JSX.Element {
     import("@tauri-apps/api/window").then(({ getCurrentWindow }) => {
       const appWindow = getCurrentWindow();
       appWindowRef.current = appWindow;
-      appWindow.onCloseRequested((event) => {
+      appWindow.onCloseRequested(async (event) => {
         if (dirtyRef.current) {
           event.preventDefault();
           setPendingAction("close");
+        } else {
+          await appWindow.destroy();
         }
       }).then((fn) => { unlisten = fn; });
     }).catch(() => { /* running in browser dev mode */ });
