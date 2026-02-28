@@ -122,63 +122,96 @@ function PrintPreview({ title, subtitle, weeks, footerTitle, footerText, weekday
       <style>{`
         @media print {
           .no-print { display: none !important; }
-          @page { size: landscape; margin: 8mm; }
+          .print-only { display: block !important; }
+          .editor-root { background: none !important; min-height: 0 !important; padding: 0 !important; }
+          @page { size: A4 landscape; margin: 0; }
+          html, body { margin: 0; padding: 0; }
           body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+          .print-page {
+            width: 100%;
+            height: 210mm;
+            padding: 6mm;
+            margin: 0 !important;
+            max-width: none !important;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+          }
+          .print-weeks-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 2mm;
+            min-height: 0;
+          }
+          .print-week {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+            margin-bottom: 0 !important;
+          }
+          .print-week-grid {
+            flex: 1;
+            min-height: 0;
+          }
+          .day-body { min-height: 0 !important; }
         }
       `}</style>
 
-      <div style={{ fontFamily: "'Segoe UI', Helvetica, sans-serif", maxWidth: 1200, margin: "0 auto", padding: 16 }}>
-        <div style={{ textAlign: "center", marginBottom: 10 }}>
-          <div style={{ display: "inline-block", background: "white", border: "1.5px solid #CBD5E1", borderRadius: 10, padding: "14px 48px", boxShadow: "0 2px 10px rgba(0,0,0,0.06)" }}>
-            <div style={{ fontSize: 24, fontWeight: 700, color: "#1E293B", letterSpacing: "-0.3px" }}>{title}</div>
-            <div style={{ fontSize: 12, color: "#94A3B8", marginTop: 3, letterSpacing: "0.04em", textTransform: "uppercase" }}>{subtitle}</div>
-          </div>
+      <div className="print-page" style={{ fontFamily: "'Segoe UI', Helvetica, sans-serif", maxWidth: 1200, margin: "0 auto", padding: 8 }}>
+        <div style={{ textAlign: "center", marginBottom: 4 }}>
+          <div style={{ fontSize: 22, fontWeight: 700, color: "#1E293B", letterSpacing: "-0.3px" }}>{title}</div>
+          <div style={{ fontSize: 12, color: "#475569", marginTop: 1, letterSpacing: "0.04em", textTransform: "uppercase", fontWeight: 600 }}>{subtitle}</div>
         </div>
 
-        {weeks.map((week, wi) => {
-          const dayColor = (di: number) => di >= 5 ? weekendColor : weekdayColor;
-          return (
-            <div key={wi} style={{ marginBottom: 10 }}>
-              <div style={{ display: "inline-block", background: "#1E293B", color: "white", padding: "2px 12px", borderRadius: "8px 8px 0 0", fontSize: 11, fontWeight: 700 }}>
-                {week.label}
+        <div className="print-weeks-area">
+          {weeks.map((week, wi) => {
+            const dayColor = (di: number) => di >= 5 ? weekendColor : weekdayColor;
+            return (
+              <div key={wi} className="print-week" style={{ marginBottom: 6 }}>
+                <div style={{ display: "inline-block", background: "#1E293B", color: "white", padding: "2px 12px", borderRadius: "8px 8px 0 0", fontSize: 11, fontWeight: 700 }}>
+                  {week.label}
+                </div>
+                <div className="print-week-grid" style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gridTemplateRows: "auto 1fr", border: "1px solid #D1D5DB", borderRadius: "0 6px 6px 6px", overflow: "hidden" }}>
+                  {week.days.map((day, di) => (
+                    <div key={di} style={{
+                      padding: "3px 2px", textAlign: "center",
+                      background: hexBg(dayColor(di)),
+                      borderBottom: `2px solid ${dayColor(di)}`,
+                      borderRight: di < 6 ? "1px solid #94A3B8" : "none",
+                    }}>
+                      <div style={{ fontSize: 8, fontWeight: 700, textTransform: "uppercase", color: dayColor(di) }}>{day.day}</div>
+                      <div style={{ fontSize: 14, fontWeight: 800, color: dayColor(di) }}>{day.date || ""}</div>
+                    </div>
+                  ))}
+                  {week.days.map((day, di) => (
+                    <div key={di} className="day-body" style={{
+                      minHeight: 120, padding: 3,
+                      borderRight: di < 6 ? "1px solid #94A3B8" : "none",
+                      background: di >= 5 ? hexBgBody(weekendColor) : "white",
+                    }}>
+                      {sortActivities(day.activities).map((act) => (
+                        <div key={act.id} style={{
+                          background: hexBg(act.colorHex), borderLeft: `3px solid ${act.colorHex}`,
+                          borderRadius: 4, padding: "3px 5px", marginBottom: 3, fontSize: 10,
+                        }}>
+                          <div style={{ fontWeight: 700, color: act.colorHex, fontSize: 9 }}>{act.time}</div>
+                          <div style={{ fontWeight: 700, color: "#1F2937" }}>{act.title}</div>
+                          {act.note && <div style={{ fontSize: 9, color: "#6B7280", fontStyle: "italic", marginTop: 2 }}>{act.note}</div>}
+                        </div>
+                      ))}
+                    </div>
+                  ))}
+                </div>
               </div>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", border: "1px solid #D1D5DB", borderRadius: "0 6px 6px 6px", overflow: "hidden" }}>
-                {week.days.map((day, di) => (
-                  <div key={di} style={{
-                    padding: "4px 2px", textAlign: "center",
-                    background: hexBg(dayColor(di)),
-                    borderBottom: `2px solid ${dayColor(di)}`,
-                    borderRight: di < 6 ? "1px solid #94A3B8" : "none",
-                  }}>
-                    <div style={{ fontSize: 8, fontWeight: 700, textTransform: "uppercase", color: dayColor(di) }}>{day.day}</div>
-                    <div style={{ fontSize: 14, fontWeight: 800, color: dayColor(di) }}>{day.date || ""}</div>
-                  </div>
-                ))}
-                {week.days.map((day, di) => (
-                  <div key={di} style={{
-                    minHeight: 120, padding: 3,
-                    borderRight: di < 6 ? "1px solid #94A3B8" : "none",
-                    background: di >= 5 ? hexBgBody(weekendColor) : "white",
-                  }}>
-                    {sortActivities(day.activities).map((act) => (
-                      <div key={act.id} style={{
-                        background: hexBg(act.colorHex), borderLeft: `3px solid ${act.colorHex}`,
-                        borderRadius: 4, padding: "3px 5px", marginBottom: 3, fontSize: 10,
-                      }}>
-                        <div style={{ fontWeight: 700, color: act.colorHex, fontSize: 9 }}>{act.time}</div>
-                        <div style={{ fontWeight: 700, color: "#1F2937" }}>{act.title}</div>
-                        {act.note && <div style={{ fontSize: 9, color: "#6B7280", fontStyle: "italic", marginTop: 2 }}>{act.note}</div>}
-                      </div>
-                    ))}
-                  </div>
-                ))}
-              </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
 
         {(footerTitle || footerText) && (
-          <div style={{ background: "#FFFBEB", border: "1px solid #F59E0B", borderRadius: 8, padding: "8px 12px", marginTop: 6 }}>
+          <div style={{ background: "#FFFBEB", border: "1px solid #F59E0B", borderRadius: 8, padding: "6px 12px", marginTop: 4 }}>
             {footerTitle && <div style={{ fontWeight: 700, color: "#92400E", fontSize: 11 }}>{footerTitle}</div>}
             {footerText && <div style={{ fontSize: 10, color: "#78350F", marginTop: 2 }}>{footerText}</div>}
           </div>
@@ -196,7 +229,7 @@ export default function ScheduleBuilder(): React.JSX.Element {
   const [weekCount, setWeekCount] = useState<1 | 2>(2);
   const [editingActivity, setEditingActivity] = useState<EditRef | null>(null);
   const [tempActivity, setTempActivity] = useState<Activity | null>(null);
-  const [showPreview, setShowPreview] = useState<boolean>(false);
+  const handlePrint = (): void => window.print();
   const [footerTitle, setFooterTitle] = useState<string>(DEFAULT_STATE.footerTitle);
   const [footerText, setFooterText] = useState<string>(DEFAULT_STATE.footerText);
   const [editingSettings, setEditingSettings] = useState<boolean>(false);
@@ -422,19 +455,20 @@ export default function ScheduleBuilder(): React.JSX.Element {
   const activeWeeks = weeks.slice(0, weekCount);
   const cellMinHeight = weekCount === 1 ? 300 : 140;
 
-  if (showPreview) {
-    return (
-      <PrintPreview
-        title={title} subtitle={subtitle} weeks={activeWeeks}
-        footerTitle={footerTitle} footerText={footerText}
-        weekdayColor={weekdayColor} weekendColor={weekendColor}
-        onBack={() => setShowPreview(false)}
-      />
-    );
-  }
-
   return (
-    <div style={{ fontFamily: "'Segoe UI', system-ui, sans-serif", maxWidth: 1100, margin: "0 auto", padding: "16px", background: "#F8FAFC", minHeight: "100vh" }}>
+    <div className="editor-root" style={{ fontFamily: "'Segoe UI', system-ui, sans-serif", maxWidth: 1100, margin: "0 auto", padding: "16px", background: "#F8FAFC", minHeight: "100vh" }}>
+
+      {/* Hidden print layout - only visible when printing */}
+      <div className="print-only" style={{ display: "none" }}>
+        <PrintPreview
+          title={title} subtitle={subtitle} weeks={activeWeeks}
+          footerTitle={footerTitle} footerText={footerText}
+          weekdayColor={weekdayColor} weekendColor={weekendColor}
+          onBack={() => {}}
+        />
+      </div>
+
+      <div className="no-print">
 
       {/* Top bar */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, flexWrap: "wrap", gap: 8 }}>
@@ -453,8 +487,8 @@ export default function ScheduleBuilder(): React.JSX.Element {
           <button onClick={() => setEditingSettings(!editingSettings)} style={{ ...btnStyle, background: "#F1F5F9", color: "#475569", border: "1px solid #CBD5E1" }}>
             <Settings size={16} /> Inställningar
           </button>
-          <button onClick={() => setShowPreview(true)} style={{ ...btnStyle, background: "#059669", color: "white", fontSize: 16 }}>
-            <Printer size={16} /> Förhandsgranska & Skriv ut
+          <button onClick={handlePrint} style={{ ...btnStyle, background: "#059669", color: "white", fontSize: 16 }}>
+            <Printer size={16} /> Skriv ut
           </button>
         </div>
       </div>
@@ -543,6 +577,12 @@ export default function ScheduleBuilder(): React.JSX.Element {
         </div>
       )}
 
+      {/* Title & Subtitle */}
+      <div style={{ textAlign: "center", marginBottom: 8 }}>
+        <div style={{ fontSize: 24, fontWeight: 700, color: "#1E293B", letterSpacing: "-0.3px" }}>{title || <span style={{ color: "#CBD5E1" }}>Ingen titel</span>}</div>
+        {subtitle && <div style={{ fontSize: 13, color: "#475569", marginTop: 2, letterSpacing: "0.04em", textTransform: "uppercase", fontWeight: 600 }}>{subtitle}</div>}
+      </div>
+
       {/* Weeks */}
       {activeWeeks.map((week, wi) => (
         <div key={wi} style={{ marginBottom: 16 }}>
@@ -600,6 +640,14 @@ export default function ScheduleBuilder(): React.JSX.Element {
         </div>
       ))}
 
+      {/* Footer */}
+      {(footerTitle || footerText) && (
+        <div style={{ background: "#FFFBEB", border: "1px solid #F59E0B", borderRadius: 8, padding: "8px 14px", marginTop: 8 }}>
+          {footerTitle && <div style={{ fontWeight: 700, color: "#92400E", fontSize: 12 }}>{footerTitle}</div>}
+          {footerText && <div style={{ fontSize: 11, color: "#78350F", marginTop: 2 }}>{footerText}</div>}
+        </div>
+      )}
+
       {/* Unsaved changes modal */}
       {pendingAction && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 200 }}>
@@ -631,9 +679,21 @@ export default function ScheduleBuilder(): React.JSX.Element {
             <label style={labelStyle}>
               Tid
               <input
-                type="time"
+                type="text"
                 value={tempActivity.time}
-                onChange={(e) => setTempActivity({ ...tempActivity, time: e.target.value })}
+                onChange={(e) => {
+                  const v = e.target.value.replace(/[^0-9:]/g, "");
+                  if (v.length <= 5) setTempActivity({ ...tempActivity, time: v });
+                }}
+                onBlur={(e) => {
+                  const m = e.target.value.match(/^(\d{1,2}):?(\d{2})$/);
+                  if (m) {
+                    const h = m[1].padStart(2, "0");
+                    const min = m[2];
+                    setTempActivity({ ...tempActivity, time: `${h}:${min}` });
+                  }
+                }}
+                placeholder="HH:MM"
                 style={{ ...inputStyle, fontSize: 18, padding: 10 }}
               />
             </label>
@@ -685,6 +745,7 @@ export default function ScheduleBuilder(): React.JSX.Element {
           </div>
         </div>
       )}
+      </div>{/* end no-print */}
     </div>
   );
 }
