@@ -108,10 +108,6 @@ const getSharedTimeRange = (weeks: Week[]): [number, number] => {
   return [min, max];
 };
 
-/** Map a time (in minutes) to a 1-indexed grid row (offset by 1 for the header row) */
-const timeToRow = (timeMinutes: number, startMinutes: number): number =>
-  Math.floor((timeMinutes - startMinutes) / 30) + 2; // +2: row 1 = header
-
 /** Returns the 7 dates (Mon–Sun) for a given ISO week number and year. */
 const getISOWeekDates = (weekNum: number, year: number): Date[] => {
   const jan4 = new Date(year, 0, 4);
